@@ -1,0 +1,50 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String         @id @default(uuid())
+  email             String         @unique
+  password_hash     String?
+  name              String?
+  preferred_language String         @default("en")
+  plan              String         @default("free")
+  created_at        DateTime       @default(now())
+  
+  diagnoses         Diagnosis[]
+  refreshTokens     RefreshToken[]
+}
+
+model Diagnosis {
+  id          String   @id @default(uuid())
+  user_id     String
+  image_url   String
+  description String
+  ai_response String?
+  language    String   @default("en")
+  status      String   @default("pending") // pending, complete, failed
+  created_at  DateTime @default(now())
+
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([created_at])
+}
+
+model RefreshToken {
+  id          String   @id @default(uuid())
+  user_id     String
+  token_hash  String   @unique
+  expires_at  DateTime
+  revoked     Boolean  @default(false)
+  created_at  DateTime @default(now())
+
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+}
